@@ -61,7 +61,7 @@ namespace Library
         }
 
         /// <summary>
-        /// Констркутор, создающий изображение заданных размеров с пикселями, заполненными 0
+        /// Пустое изображение заданных размеров с пикселями, заполненными 0
         /// </summary>
         /// <param name="w">Ширина</param>
         /// <param name="h">Высота</param>
@@ -199,9 +199,9 @@ namespace Library
            Common.ThrowIfNull(image, nameof(image));
 
             if (vPad.Item1 < 0 || vPad.Item2 < 0)
-                throw new ArgumentException(nameof(vPad));
+                throw new ArgumentException("Wrong vertical pad size");
             if(hPad.Item1 < 0 || hPad.Item2 < 0)
-                throw new ArgumentException(nameof(hPad));
+                throw new ArgumentException("Wrong horizontal pad size");
 
 
             (int hPadLeft, int hPadRight) = hPad;

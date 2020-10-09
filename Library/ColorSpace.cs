@@ -97,6 +97,7 @@ namespace Library
     /// <summary>
     /// Цветовое пространство YCbCr (Яркость + 2 цветоразностные компоненты)
     /// </summary>
+    /// <remarks>https://ru.wikipedia.org/wiki/YCbCr#Преобразования_JPEG</remarks>
     public class YCbCr : ColorSpace
     {
         public override (float, float, float) FromRGB((float, float, float) pixel)
@@ -110,6 +111,12 @@ namespace Library
         }
     }
 
+    /// <summary>
+    /// Оттенки серого
+    /// </summary>
+    /// <remarks>
+    /// https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems
+    /// </remarks>
     public class GrayScale : ColorSpace
     {
         public override (float, float, float) FromRGB((float, float, float) pixel)
