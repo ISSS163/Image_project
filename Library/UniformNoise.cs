@@ -4,6 +4,8 @@ using System.Text;
 
 namespace Library
 {
+    //PATTERN Шаблонный метод
+
     /// <summary>
     /// Равномерный шум с заданной амплитудой
     /// </summary>

@@ -109,7 +109,21 @@ namespace Library
         /// <returns>Ядра для вертикальных и горизонтальных границ</returns>
         public static (float[,], float[,]) GetSobelKernels()
         {
-            throw new NotImplementedException();
+            var kernelV = new float[,]
+            {
+                {-1,-2,-1 },
+                { 0, 0, 0 },
+                { 1, 2, 1 }
+            };
+
+            var kernelH = new float[,]
+            {
+                {-1, 0, 1 },
+                {-2, 0, 2 },
+                {-1, 0, 1 }
+            };
+
+            return (kernelV, kernelH);
         }
 
         /// <summary>
@@ -131,7 +145,21 @@ namespace Library
         /// <returns>Ядра для вертикальных и горизонтальных границ</returns>
         public static (float[,], float[,]) GetSharrKernels() 
         {
-            throw new NotImplementedException(); 
+            var kernelV = new float[,]
+            {
+                {-3,-10,-3 },
+                { 0, 0,  0 },
+                { 3, 10, 3 }
+            };
+
+            var kernelH = new float[,]
+            {
+                {-3,  0, 3 },
+                {-10, 0, 10 },
+                {-3,  0, 3 }
+            };
+
+            return (kernelV, kernelH);
         }
 
         /// <summary>

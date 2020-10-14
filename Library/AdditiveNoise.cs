@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Library
 {
+    //PATTERN Шаблонный метод
+
+
     /// <summary>
     /// Аддитивный шум
     /// </summary>

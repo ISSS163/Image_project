@@ -5,6 +5,8 @@ using System.Text;
 
 namespace Library
 {
+    //PATTERN Шаблонный метод
+
     /// <summary>
     /// Оконный фильтр
     /// </summary>

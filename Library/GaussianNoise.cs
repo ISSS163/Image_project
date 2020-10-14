@@ -26,6 +26,7 @@ namespace Library
         /// Мат. ожидание
         /// </summary>
         public float M { get; }
+
         /// <summary>
         /// СКО
         /// </summary>

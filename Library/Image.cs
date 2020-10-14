@@ -74,6 +74,23 @@ namespace Library
             _data = new float[h, w, 3];
         }
 
+        public Image Copy()
+        {
+            Image result = new Image(this.Height, this.Width);
+            for (int i = 0; i < this.Height; i++)
+            {
+                for (int j = 0; j < this.Width; j++)
+                {
+                    for (int k = 0; k < this.Channels; k++)
+                    {
+                        result[i, j, k] = this[i, j, k];
+                    }
+                }
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// Открыть файл с изображением
         /// </summary>

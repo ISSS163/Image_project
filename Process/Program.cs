@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Threading;
 using Library;
+using SkiaSharp;
 
 namespace Process
 {
@@ -22,8 +24,15 @@ namespace Process
         public const string FILTER_HSV2RGB          = "HSV2RGB";
         public const string FILTER_YCbCR            = "YCbCr";
         public const string FILTER_YCbCR2RGB        = "YCbCr2RGB";
-        public const string FILTER_SHARP = "Sharp";
-        //TODO: MedianFilter, BinarizationFilter, GrayScale, Sharr, Sobel
+        public const string FILTER_SHARP            = "Sharp";
+        public const string FILTER_MEDIAN           = "Median";
+        public const string FILTER_BINARIZATION     = "Binarize";
+        public const string FILTER_GRAYSCALE        = "Gray";
+        public const string FILTER_SHARR            = "Sharr";
+        public const string FILTER_SOBEL            = "Sobel";
+        public const string FILTER_IMPULSE_NOISE    = "ImpulseNoise";
+        public const string FILTER_HIGH_PASS        = "HighPass";
+        public const string FILTER_LOW_PASS         = "LowPass";      
     }
 
     class Program
@@ -31,132 +40,158 @@ namespace Process
         const string FILTER_MARK = "-f";
         const string HELP_MARK = "-h";
 
-        static bool ParseInt(string s, out int x)
+        static bool Parse<T>(string s, out T x)
         {
-            return int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out x);
+            bool result = false ;
+            if (typeof(T) == typeof(float))
+            {
+                float val;
+                result = float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out val);
+                x = (T)Convert.ChangeType(val, typeof(T));
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                int val;
+                result = int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out val);
+                x = (T)Convert.ChangeType(val, typeof(T));
+            }
+            else
+                throw new NotSupportedException("Unsupported type");
+            return result;
         }
 
-        static bool ParseFloat(string s, out float x)
+        static T ParseArg<T>(List<string> args, int pos, T defaultValue, string errorMsg)
         {
-            return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out x);
-        }
+            if (args == null || args.Count <= pos)
+                return defaultValue;
 
+            string arg = args[pos];
+
+            T val;
+            if (!Parse<T>(arg, out val))
+                throw new ArgumentException(errorMsg);
+            return val;
+        }
+        
+        //PATTERN Фабричный метод (простейший вариант)
         static IFilter CreateFilter(string filterName, List<string> args)
         {
             //количество аргументов
             int argsCount = args == null ? 0 : args.Count;
-
-            switch (filterName)
+            try
             {
-                case FilterNames.FILTER_BLUR:
-                    {
-                        int size = 3; //параметр по умолчанию
-                        if (argsCount > 0)
+                switch (filterName)
+                {
+                    case FilterNames.FILTER_BLUR:
                         {
-                            if (!ParseInt(args[0], out size) || size <= 1)
-                                throw new ArgumentException("Blur: Invalid size");
+                            int size = ParseArg<int>(args, 0, 3, "Invalid size");
+                            return new ConvolutionalFilter(Kernels.GetUniformKernel(size, size));
                         }
-                        return new ConvolutionalFilter(Kernels.GetUniformKernel(size, size));
-                    }
-                case FilterNames.FILTER_GAUSSIAN_BLUR:
-                    {
-                        float sigma = 1; //параметры по умолчанию
-                        int size = 3;
-                        if (argsCount > 0)
+                    case FilterNames.FILTER_GAUSSIAN_BLUR:
                         {
-                            if (!ParseInt(args[0], out size) || size <= 1)
-                                throw new ArgumentException("Gaussian Blur: Invalid size");
-                        }
-                        if (argsCount > 1)
-                        {
-                            if (!ParseFloat(args[1], out sigma) || sigma <= 0)
-                                throw new ArgumentException("Gaussian Blur: Invalid StdDev");
-                        }
-                        return new ConvolutionalFilter(Kernels.GetGaussianKernel(size, sigma));
-                    }
-                case FilterNames.FILTER_UNIFORM_NOISE:
-                    {
-                        int amplitude = 5;
-                        if (argsCount > 0)
-                        {
-                            if (!ParseInt(args[0], out amplitude) || amplitude < 1)
-                                throw new ArgumentException("Uniform Noise: Invalid amplitude");
-                        }
-                        return new UniformNoise(amplitude);
-                    }
-                case FilterNames.FILTER_GAUSSIAN_NOISE:
-                    {
-                        float sigma = 0.15f;
-                        if (argsCount > 0)
-                        {
-                            if (!ParseFloat(args[0], out sigma) || sigma < 0)
-                                throw new ArgumentException("Gaussian Noise: Invalid StdDiv (must be > 0)");
-                        }
-                        return new GaussianNoise(sigma);
-                    }
-                case FilterNames.FILTER_LAPLACE:
-                    {
-                        return new EdgeDetection(EdgeDetection.EdgeDetectionAlgorithm.Laplace);
-                    }
-                case FilterNames.FILTER_PREWITT:
-                    {
-                        return new EdgeDetection(EdgeDetection.EdgeDetectionAlgorithm.Prewitt);
-                    }
-                case FilterNames.FILTER_CONTRAST:
-                    {
-                        float maxValue = 255;
-                        float minValue = 0;
+                            int size = ParseArg<int>(args, 0, 3, "Invalid size");
+                            float sigma = ParseArg<float>(args, 1, 1, "Invalid StdDev");
 
-                        if (argsCount > 0)
-                        {
-                            if (!ParseFloat(args[0], out maxValue))
-                                throw new ArgumentException("Contrast: Invalid max value");
+                            return new ConvolutionalFilter(Kernels.GetGaussianKernel(size, sigma));
                         }
-                        if (argsCount > 1)
+                    case FilterNames.FILTER_UNIFORM_NOISE:
                         {
-                            if (!ParseFloat(args[1], out minValue) || minValue >= maxValue)
-                                throw new ArgumentException("Contrast: Invalid min value");
+                            int amplitude = ParseArg<int>(args, 0, 3, "Invalid amplitude");
+                            return new UniformNoise(amplitude);
                         }
-                        return new Contrast(maxValue, minValue);
-                    }
-                case FilterNames.FILTER_SHARP:
-                    {
-                        return new ConvolutionalFilter(Kernels.GetSharpeningKernel());
-                    }
-                case FilterNames.FILTER_LOG_CONTRAST:
-                    {
-                        return new LogConstrast();
-                    }
-                case FilterNames.FILTER_HSV:
-                    {
-                        return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.RGB2HSV);
-                    }
-                case FilterNames.FILTER_HSV2RGB:
-                    {
-                        return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.HSV2RGB);
-                    }
-                case FilterNames.FILTER_YCbCR:
-                    {
-                        return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.RGB2YCbCr);
-                    }
-                case FilterNames.FILTER_YCbCR2RGB:
-                    {
-                        return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.YCbCr2RGB);
-                    }
+                    case FilterNames.FILTER_GAUSSIAN_NOISE:
+                        {
+                            float sigma = ParseArg<float>(args, 0, 0.15f, "Invalid StdDev");
+                            return new GaussianNoise(sigma);
+                        }
+                    case FilterNames.FILTER_LAPLACE:
+                        {
+                            return new EdgeDetection(EdgeDetection.EdgeDetectionAlgorithm.Laplace);
+                        }
+                    case FilterNames.FILTER_PREWITT:
+                        {
+                            return new EdgeDetection(EdgeDetection.EdgeDetectionAlgorithm.Prewitt);
+                        }
+                    case FilterNames.FILTER_SHARR:
+                        {
+                            return new EdgeDetection(EdgeDetection.EdgeDetectionAlgorithm.Sharr);
+                        }
+                    case FilterNames.FILTER_SOBEL:
+                        {
+                            return new EdgeDetection(EdgeDetection.EdgeDetectionAlgorithm.Sobel);
+                        }
+                    case FilterNames.FILTER_CONTRAST:
+                        {
+                            float maxValue = ParseArg<float>(args, 0, 255, "Invalid max value");
+                            float minValue = ParseArg<float>(args, 1, 0, "Invalid min value");
 
-                //TODO: MedianFilter, BinarizationFilter, ImpulseNoise, GrayScale, Sharr, Sobel
-
-
-                default:
-                    throw new ArgumentException("Unsupported filter");
+                            return new Contrast(maxValue, minValue);
+                        }
+                    case FilterNames.FILTER_SHARP:
+                        {
+                            return new ConvolutionalFilter(Kernels.GetSharpeningKernel());
+                        }
+                    case FilterNames.FILTER_LOG_CONTRAST:
+                        {
+                            return new LogConstrast();
+                        }
+                    case FilterNames.FILTER_HSV:
+                        {
+                            return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.RGB2HSV);
+                        }
+                    case FilterNames.FILTER_HSV2RGB:
+                        {
+                            return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.HSV2RGB);
+                        }
+                    case FilterNames.FILTER_YCbCR:
+                        {
+                            return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.RGB2YCbCr);
+                        }
+                    case FilterNames.FILTER_YCbCR2RGB:
+                        {
+                            return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.YCbCr2RGB);
+                        }
+                    case FilterNames.FILTER_BINARIZATION:
+                        {
+                            float edge = ParseArg<int>(args, 0, 128, "Invalid threshold value");
+                            return new BinarizationFilter(edge);
+                        }
+                    case FilterNames.FILTER_IMPULSE_NOISE:
+                        {
+                            float p = ParseArg<float>(args, 0, 0.1f, "Invalid probability value");
+                            return new ImpulseNoise(p);
+                        }
+                    case FilterNames.FILTER_GRAYSCALE:
+                        {
+                            return new ColorSpaceConversion(ColorSpaceConversion.ConversionType.RGB2Gray);
+                        }
+                    case FilterNames.FILTER_LOW_PASS:
+                        {
+                            float s = ParseArg<float>(args, 0, 0.15f, "Invalid parameter");
+                            return new FrequencyFilter(FrequencyFilter.FilterMode.LowPass, s);
+                        }
+                    case FilterNames.FILTER_HIGH_PASS:
+                        {
+                            float s = ParseArg<float>(args, 0, 0.15f, "Invalid parameter");
+                            return new FrequencyFilter(FrequencyFilter.FilterMode.HighPass, s);
+                        }
+                    default:
+                        throw new NotSupportedException("Unsupported filter");
+                }
+            }
+            catch(ArgumentException e)
+            {
+                throw new ArgumentException(filterName + ": " + e.Message, e);
             }
         }
 
+        
         static List<IFilter> ParseArgs(string[] args)
         {
             int pos = 0;
             int nextPos = 0;
             List<IFilter> result = new List<IFilter>();
+            
             while (pos < args.Length - 2) // последние 2 аргумента - это входной и выходной файлы
             {
                 if (args[pos] == FILTER_MARK) // если текущий элемент - флаг фильтра (-f)
@@ -175,6 +210,7 @@ namespace Process
                 }
                 else ++pos;
             }
+
             return result;
         }
 
@@ -193,7 +229,6 @@ Example:
     Process -f UniformNoise 10 -f Blur 5 1.bmp 1.png
 ";
 
-
         static void Main(string[] args)
         {
             if (args.Length < 3) { //Нет аргументов
@@ -201,7 +236,7 @@ Example:
                 Console.WriteLine();
                 Console.WriteLine(Help);
                 return;
-                //args = new[] { "-f", "Laplace", "-f", "YCbCr2RGB",  @"D:\WORK\Data\Tmp\IN\0.bmp", @"D:\WORK\Data\Tmp\OUT\0.png" };
+                //args = new[] { "-f", "LowPass","0.9", "-f", "Contrast",  @"D:\WORK\Data\Tmp\IN\PVD.bmp", @"D:\WORK\Data\Tmp\OUT\PVD.png" };
             }
 
 
@@ -239,7 +274,7 @@ Example:
             }
             catch(Exception e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Console.WriteLine("Unexpected error: " + e.Message);
                 return;
             }
         }

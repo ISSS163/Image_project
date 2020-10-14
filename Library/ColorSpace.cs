@@ -102,12 +102,25 @@ namespace Library
     {
         public override (float, float, float) FromRGB((float, float, float) pixel)
         {
-            throw new NotImplementedException();
+            float y, cb, cr, r, g, b;
+            (r, g, b) = pixel;
+            y = 0 + 0.299f * r + 0.587f * g + 0.117f * b;
+            cb = 128 - 0.168736f * r - 0.331264f * g + 0.5f * b;
+            cr = 128 + 0.5f * r - 0.418688f * g - 0.081312f * b;
+
+            return (y, cb, cr);
         }
 
         public override (float, float, float) ToRGB((float, float, float) pixel)
         {
-            throw new NotImplementedException();
+            float y, cb, cr, r, g, b;
+            (y, cb, cr) = pixel;
+
+            r = y + 1.402f * (cr - 128);
+            g = y - 0.34414f * (cb - 128) - 0.71414f * (cr - 128);
+            b = y + 1.772f * (cb - 128);
+
+            return (r, g, b);
         }
     }
 
@@ -121,7 +134,10 @@ namespace Library
     {
         public override (float, float, float) FromRGB((float, float, float) pixel)
         {
-            throw new NotImplementedException();
+            float r, g, b, gray;
+            (r, g, b) = pixel;
+            gray = 0.299f * r + 0.587f * g + 0.114f * b;
+            return (gray, gray, gray);
         }
 
         public override (float, float, float) ToRGB((float, float, float) pixel)
@@ -129,4 +145,5 @@ namespace Library
             return pixel; //нельзя восстановить RGB из GrayScale
         }
     }
+
 }

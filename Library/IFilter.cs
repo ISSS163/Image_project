@@ -4,6 +4,8 @@ using System.Text;
 
 namespace Library
 {
+    //PATTERN Strategy
+    
     /// <summary>
     /// Интерфейс фильтра
     /// </summary>

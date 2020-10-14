@@ -5,6 +5,8 @@ using System.Text;
 
 namespace Library
 {
+    //PATTERN Адаптер (или Фасад, зависит от того, как смотреть)
+
      /// <summary>
      /// Преобразование цветовых пространств
      /// </summary>
@@ -20,7 +22,6 @@ namespace Library
             RGB2YCbCr = 2,
             YCbCr2RGB = 3,
             RGB2Gray = 4,
-            Gray2RGB = 5,
         }
 
         public ColorSpaceConversion(ConversionType c)
@@ -28,7 +29,21 @@ namespace Library
             //используем то, что у всех членов перечисления ConversionType указаны значения
             int type = (int)c / 2;
             int direction = (int)c % 2;
-            ColorSpace = type == 0 ? new HSV() as ColorSpace: new YCbCr() as ColorSpace;
+            switch (type)
+            {
+                case 0:
+                    ColorSpace = new HSV();
+                    break;
+                case 1:
+                    ColorSpace = new YCbCr();
+                    break;
+                case 2:
+                    ColorSpace = new GrayScale();
+                    break;
+                default:
+                    throw new ArgumentException("Unknown color space");
+            }
+
             IsForwardConversion = direction == 0;
         }
 
